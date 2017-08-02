@@ -5,6 +5,9 @@ public class TileInfo : IEquatable<TileInfo>
 {
     public float MapTileSize { get; private set; }
 
+    private const int MapPixelSize = 256;
+
+
     public TileInfo(WorldCoordinate centerLocation, int zoom, float mapTileSize)
     {
         SetStandardValues(mapTileSize);
@@ -12,7 +15,7 @@ public class TileInfo : IEquatable<TileInfo>
         //http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames#Tile_numbers_to_lon..2Flat._2
         var latrad = centerLocation.Lat * Mathf.Deg2Rad;
         var n = Math.Pow(2, zoom);
-        X = (int)((centerLocation.Lon + 180.0)/360.0*n);
+        X = (int)((centerLocation.Lon + 180.0) / 360.0 * n);
         Y = (int)((1.0 - Mathf.Log(Mathf.Tan(latrad) + 1 / Mathf.Cos(latrad)) / Mathf.PI) / 2.0 * n);
         ZoomLevel = zoom;
     }
@@ -30,8 +33,8 @@ public class TileInfo : IEquatable<TileInfo>
         MapTileSize = mapTileSize;
     }
 
-    public int X { get;  set; }
-    public int Y { get;  set; }
+    public int X { get; set; }
+    public int Y { get; set; }
 
     public int ZoomLevel { get; private set; }
 
@@ -65,4 +68,38 @@ public class TileInfo : IEquatable<TileInfo>
             return hashCode;
         }
     }
+
+    //http://wiki.openstreetmap.org/wiki/Zoom_levels
+    private static readonly float[] _zoomScales =
+    {
+        156412f, 78206f, 39103f, 19551f, 9776f, 4888f, 2444f,
+        1222f, 610.984f, 305.492f, 152.746f, 76.373f, 38.187f,
+        19.093f, 9.547f, 4.773f, 2.387f, 1.193f, 0.596f, 0.298f
+    };
+
+    public float ScaleFactor
+    {
+        get { return _zoomScales[ZoomLevel] * MapPixelSize; }
+    }
+
+    public WorldCoordinate GetNorthEast()
+    {
+        return GetNorthWestLocation(X+1, Y, ZoomLevel);
+    }
+
+    public WorldCoordinate GetSouthWest()
+    {
+        return GetNorthWestLocation(X, Y+1, ZoomLevel);
+    }
+
+//http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames#C.23
+private WorldCoordinate GetNorthWestLocation(int tileX, int tileY, int zoomLevel)
+{
+    var p = new WorldCoordinate();
+    var n = Math.Pow(2.0, zoomLevel);
+    p.Lon = (float)(tileX / n * 360.0 - 180.0);
+    var latRad = Math.Atan(Math.Sinh(Math.PI * (1 - 2 * tileY / n)));
+    p.Lat = (float) (latRad * 180.0 / Math.PI);
+    return p;
+}
 }

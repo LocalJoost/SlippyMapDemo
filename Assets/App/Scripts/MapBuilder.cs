@@ -10,7 +10,7 @@ public class MapBuilder : MonoBehaviour
 
     public float Latitude = 47.642567f;
     public float Longitude = -122.136919f;
-    
+
     public GameObject MapTilePrefab;
 
     public float MapSize = 12;
